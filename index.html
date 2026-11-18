@@ -62,13 +62,13 @@ textarea{min-height:300px;line-height:1.6;resize:vertical}
  body{font-size:19px}
  thead{display:none}
  table,tbody{display:block}
- tbody tr{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:16px 6px;border-bottom:1px solid var(--line)}
+ tbody tr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;padding:16px 6px;border-bottom:1px solid var(--line)}
  td{border:0;padding:0;text-align:left;width:auto!important}
- td.num{display:none}
- td.t{grid-column:1/-1;font-size:22px}
- td.c-d{grid-column:1/-1;font-size:17px}
- tr.notice td.num{display:block}
- tr.notice td.t{grid-column:2}
+ td.num{grid-column:1;grid-row:1/span 4;min-width:2.2em;text-align:center;font-size:22px;font-weight:800;color:var(--ac);align-self:start;padding-top:2px}
+ td.c-v,td.t,td.c-n,td.c-d{grid-column:2}
+ td.t{font-size:22px}
+ td.c-d{font-size:17px}
+ td.empty{grid-column:1/-1}
  .two{grid-template-columns:1fr}
 }
 </style>
