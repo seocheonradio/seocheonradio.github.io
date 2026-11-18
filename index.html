@@ -71,7 +71,13 @@ textarea{min-height:300px;line-height:1.6;resize:vertical}
 .delbox p{margin:0;font-size:19px}
 .delrow{display:flex;flex-wrap:wrap;gap:10px}
 .delrow input{flex:1 1 160px;max-width:240px}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:16px 26px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none}
+.htag{display:inline-block;margin-left:8px;padding:0 8px;border-radius:6px;background:var(--ink);color:var(--bg);font-size:16px;font-weight:700;vertical-align:2px;white-space:nowrap}
+tr.hid td{opacity:.55}
+.abar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:0 0 16px;padding:12px 16px;border-radius:12px;background:var(--ink);color:var(--bg);font-weight:700}
+.abar button{min-height:48px;font-size:18px;background:var(--bg);color:var(--ink);border-color:var(--bg)}
+.alink{background:none;border:0;min-height:44px;padding:0 10px;font-size:16px;font-weight:400;color:var(--sub);text-decoration:underline}
+.hidnote{margin:14px 0 0;padding:12px 16px;border-radius:10px;background:var(--soft);font-size:18px;font-weight:700}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;max-width:90vw;text-align:center;background:var(--ink);color:var(--bg);padding:16px 26px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 [hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){.toast{transition:none}}
@@ -101,6 +107,12 @@ textarea{min-height:300px;line-height:1.6;resize:vertical}
  </header>
 
  <section id="vList">
+  <div class="abar" id="aBar" hidden><span>관리자 모드 — 비공개 글도 보입니다</span><button id="aOut">관리자 나가기</button></div>
+  <div class="delbox" id="aBox" hidden style="margin:0 auto 20px">
+   <p><b>관리자 비밀번호</b>를 적어 주세요.</p>
+   <div class="delrow"><input id="aPin" class="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="12" aria-label="관리자 비밀번호"><button id="aGo">들어가기</button></div>
+   <p class="err" id="aErr" role="alert" style="text-align:left"></p>
+  </div>
   <table>
    <thead><tr><th class="num">번호</th><th class="c-v">마을</th><th>사연 · 신청곡</th><th class="c-n">이름</th><th class="c-d">날짜</th></tr></thead>
    <tbody id="rows"></tbody>
@@ -144,9 +156,10 @@ textarea{min-height:300px;line-height:1.6;resize:vertical}
  <section id="vRead" hidden>
   <div class="read">
    <div class="meta" id="rMeta"></div>
+   <p class="hidnote" id="rHidNote" hidden>비공개 글입니다 — 관리자만 볼 수 있어요</p>
    <div class="body" id="rBody"></div>
    <div class="photos" id="rPhotos"></div>
-   <div class="acts" style="margin-top:26px"><button class="ghost" id="rBack">목록으로</button><button class="ghost" id="rDel">이 글 지우기</button></div>
+   <div class="acts" style="margin-top:26px"><button class="ghost" id="rBack">목록으로</button><button class="ghost" id="rDel">이 글 지우기</button><button class="ghost" id="rHide" hidden>비공개로 돌리기</button></div>
    <div class="delbox" id="delBox" hidden>
     <p>글 쓸 때 정한 <b>비밀번호 4자리</b>를 적어 주세요.<br><span style="color:var(--sub);font-size:17px">관리자는 관리자 비밀번호를 적으면 됩니다.</span></p>
     <div class="delrow"><input id="dPin" class="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="12" aria-label="비밀번호"><button id="dGo">지우기</button></div>
@@ -155,6 +168,7 @@ textarea{min-height:300px;line-height:1.6;resize:vertical}
   </div>
  </section>
 
+ <p class="note"><button class="alink" id="aLink">관리자</button></p>
  <p class="note" id="status">게시판을 불러오는 중입니다…</p>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -163,7 +177,7 @@ textarea{min-height:300px;line-height:1.6;resize:vertical}
 {
 const $=id=>document.getElementById(id);
 const PER=10;
-let posts=[],page=1,q='',busy=false,cur=null;
+let posts=[],page=1,q='',busy=false,cur=null,adminPin='';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=t=>{const d=new Date(t);return isNaN(d)?'':`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 const title=b=>{const l=String(b||'').split('\n').map(x=>x.trim()).filter(Boolean);return l[0]||'(내용 없음)'};
@@ -190,7 +204,7 @@ function render(){
  const start=(page-1)*PER,slice=list.slice(start,start+PER);
  let h=`<tr class="notice"><td class="num"><span class="badge">안내</span></td><td class="t" colspan="4">글쓰기를 누르고 마을 · 이름 · 사연과 신청곡을 적어 주세요</td></tr>`;
  if(!slice.length)h+=`<tr><td colspan="5" class="empty">${q?'찾는 글이 없습니다':'아직 올라온 신청곡이 없습니다. 첫 사연을 보내 주세요!'}</td></tr>`;
- h+=slice.map((p,i)=>`<tr class="row" data-id="${esc(p.id)}" tabindex="0"><td class="num">${list.length-start-i}</td><td class="c-v vill">${esc(p.village)}</td><td class="t">${esc(title(p.body))}${p.photos&&p.photos.length?`<span class="ptag">사진 ${p.photos.length}</span>`:''}</td><td class="c-n">${esc(p.name)}</td><td class="c-d">${fmt(p.at)}</td></tr>`).join('');
+ h+=slice.map((p,i)=>`<tr class="row${p.hidden?' hid':''}" data-id="${esc(p.id)}" tabindex="0"><td class="num">${list.length-start-i}</td><td class="c-v vill">${esc(p.village)}</td><td class="t">${esc(title(p.body))}${p.photos&&p.photos.length?`<span class="ptag">사진 ${p.photos.length}</span>`:''}${p.hidden?'<span class="htag">비공개</span>':''}</td><td class="c-n">${esc(p.name)}</td><td class="c-d">${fmt(p.at)}</td></tr>`).join('');
  $('rows').innerHTML=h;
  let g='';
  if(pages>1){for(let n=1;n<=pages;n++)g+=`<button class="${n===page?'on':''}" data-p="${n}" aria-label="${n}쪽">${n}</button>`}
@@ -198,7 +212,8 @@ function render(){
 }
 
 function openPost(id){
- const p=posts.find(x=>x.id===id);if(!p)return;cur=p;$('delBox').hidden=true;$('dPin').value='';$('dErr').textContent='';
+ const p=posts.find(x=>x.id===id);if(!p)return;cur=p;$('delBox').hidden=true;$('dPin').value=adminPin;$('dErr').textContent='';
+ $('rHide').hidden=!adminPin;$('rHide').textContent=p.hidden?'다시 공개하기':'비공개로 돌리기';$('rHidNote').hidden=!p.hidden;
  $('rMeta').innerHTML=`<span>마을 <b>${esc(p.village)}</b></span><span>보낸 분 <b>${esc(p.name)}</b></span><span>${fmt(p.at)}</span>`;
  $('rBody').textContent=p.body;
  const ph=(p.photos||[]).filter(x=>/^[\w-]+$/.test(x));
@@ -208,7 +223,7 @@ function openPost(id){
 
 async function load(quiet){
  if(busy)return;busy=true;
- try{posts=await server('listPosts');render();$('status').textContent='PC와 휴대폰 어디서 올려도 이 게시판에 함께 모입니다.'}
+ try{posts=adminPin?await server('adminList',{action:'adminList',pin:adminPin}):await server('listPosts');render();$('status').textContent='PC와 휴대폰 어디서 올려도 이 게시판에 함께 모입니다.'}
  catch(e){if(!quiet)$('status').textContent='게시판을 불러오지 못했습니다. 잠시 뒤 새로고침해 주세요.'}
  finally{busy=false}
 }
@@ -223,12 +238,31 @@ $('rBack').addEventListener('click',()=>show('vList'));
 
 try{$('fVill').value=localStorage.getItem('sr_vill')||'';$('fName').value=localStorage.getItem('sr_name')||''}catch(e){}
 
+// ---- 관리자 모드 (비밀번호는 이 화면을 닫으면 잊어버림)
+const errMsg=e=>/WRONG_PIN/.test(e.message)?'비밀번호가 맞지 않아요':/LOCKED/.test(e.message)?'비밀번호가 여러 번 틀려서 10분 동안 막혔어요':'잠시 뒤 다시 눌러 주세요';
+$('aLink').addEventListener('click',()=>{if(adminPin)return;show('vList');$('aBox').hidden=false;$('aPin').value='';$('aErr').textContent='';$('aPin').focus();window.scrollTo(0,0)});
+$('aGo').addEventListener('click',async()=>{
+ const pin=$('aPin').value.trim();if(!pin){$('aErr').textContent='비밀번호를 적어 주세요';return}
+ const b=$('aGo');b.disabled=true;
+ try{posts=await server('adminList',{action:'adminList',pin});adminPin=pin;$('aBox').hidden=true;$('aBar').hidden=false;page=1;render();toast('관리자 모드입니다')}
+ catch(e){$('aErr').textContent=errMsg(e)}
+ finally{b.disabled=false}
+});
+$('aPin').addEventListener('keydown',e=>{if(e.key==='Enter')$('aGo').click()});
+$('aOut').addEventListener('click',()=>{adminPin='';$('aBar').hidden=true;posts=posts.filter(p=>!p.hidden);render();load(true);toast('관리자 모드를 나왔습니다')});
+$('rHide').addEventListener('click',async()=>{
+ if(!cur||!adminPin)return;const b=$('rHide');b.disabled=true;const want=!cur.hidden;
+ try{posts=await server('hide',{action:'hide',id:cur.id,pin:adminPin,hidden:want});render();const id=cur.id;openPost(id);toast(want?'비공개로 돌렸습니다':'다시 공개했습니다')}
+ catch(e){toast(errMsg(e))}
+ finally{b.disabled=false}
+});
+
 // ---- 글 지우기
 $('rDel').addEventListener('click',()=>{const b=$('delBox');b.hidden=!b.hidden;if(!b.hidden)$('dPin').focus()});
 $('dGo').addEventListener('click',async()=>{
  const pin=$('dPin').value.trim();if(!pin||!cur){$('dErr').textContent='비밀번호를 적어 주세요';return}
  const b=$('dGo');b.disabled=true;b.textContent='지우는 중…';
- try{posts=await server('delete',{action:'delete',id:cur.id,pin});render();show('vList');toast('글을 지웠습니다')}
+ try{posts=await server('delete',{action:'delete',id:cur.id,pin});render();show('vList');toast('글을 지웠습니다');if(adminPin)load(true)}
  catch(e){$('dErr').textContent=/WRONG_PIN/.test(e.message)?'비밀번호가 맞지 않아요':/LOCKED/.test(e.message)?'비밀번호가 여러 번 틀려서 10분 동안 지울 수 없어요':'지우지 못했습니다. 잠시 뒤 다시 눌러 주세요'}
  finally{b.disabled=false;b.textContent='지우기'}
 });
@@ -264,7 +298,7 @@ $('wForm').addEventListener('submit',async e=>{
  try{
   posts=await server('addPost',{village,name,body,pin,photos:photos.map(d=>({data:d.split(',')[1]}))});
   try{localStorage.setItem('sr_vill',village);localStorage.setItem('sr_name',name)}catch(e){}
-  $('fBody').value='';$('fPin').value='';photos=[];drawThumbs();page=1;q='';$('sInput').value='';render();show('vList');toast('신청곡이 올라갔습니다. 감사합니다!');
+  $('fBody').value='';$('fPin').value='';photos=[];drawThumbs();page=1;q='';$('sInput').value='';render();show('vList');toast('신청곡이 올라갔습니다. 감사합니다!');if(adminPin)load(true);
  }catch(err){$('wErr').textContent='올리지 못했습니다. 잠시 뒤 다시 눌러 주세요'}
  finally{btn.disabled=false;btn.textContent='올리기'}
 });
