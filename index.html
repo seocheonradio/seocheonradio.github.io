@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>라디오 서천 신청곡</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#d6336c">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="라디오 서천">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -77,6 +84,12 @@ tr.hid td{opacity:.55}
 .abar button{min-height:48px;font-size:18px;background:var(--bg);color:var(--ink);border-color:var(--bg)}
 .alink{background:none;border:0;min-height:44px;padding:0 10px;font-size:16px;font-weight:400;color:var(--sub);text-decoration:underline}
 .hidnote{margin:14px 0 0;padding:12px 16px;border-radius:10px;background:var(--soft);font-size:18px;font-weight:700}
+.inst{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px 14px;margin:0 0 18px;padding:14px 16px;border-radius:14px;background:light-dark(#fde8ef,#3a1f29);border:2px solid var(--ac);font-weight:700;font-size:19px}
+.inst img{width:48px;height:48px;border-radius:12px;flex:none}
+.inst span{font-weight:600;line-height:1.45}
+.inst span b{color:var(--ac)}
+.inst #instBtn{grid-column:1/-1;min-height:52px;font-size:20px}
+.inst .x{min-width:52px;padding:0;background:transparent;border:0;color:var(--sub);font-size:28px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;max-width:90vw;text-align:center;background:var(--ink);color:var(--bg);padding:16px 26px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 [hidden]{display:none!important}
@@ -106,6 +119,7 @@ tr.hid td{opacity:.55}
   <button id="goWrite">✎ 글쓰기</button>
  </header>
 
+ <div class="inst" id="inst" hidden><img src="icon-192.png" alt=""><span id="instTxt">휴대폰 홈 화면에 '라디오 서천' 앱을 놓아 두면 다음부터 바로 열려요</span><button id="instBtn">앱 설치</button><button class="x" id="instX" aria-label="안내 닫기">×</button></div>
  <section id="vList">
   <div class="abar" id="aBar" hidden><span>관리자 모드 — 비공개 글도 보입니다</span><button id="aOut">관리자 나가기</button></div>
   <div class="delbox" id="aBox" hidden style="margin:0 auto 20px">
@@ -302,6 +316,18 @@ $('wForm').addEventListener('submit',async e=>{
  }catch(err){$('wErr').textContent='올리지 못했습니다. 잠시 뒤 다시 눌러 주세요'}
  finally{btn.disabled=false;btn.textContent='올리기'}
 });
+
+// ---- 홈 화면 앱
+try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+let seen=false;try{seen=localStorage.getItem('sr_inst_x')==='1'}catch(e){}
+let deferred=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;if(!standalone&&!seen&&matchMedia('(pointer:coarse)').matches){$('instBtn').hidden=false;$('inst').hidden=false}});
+const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(ios&&!standalone&&!seen){$('instTxt').innerHTML="앱으로 쓰려면 화면 아래 <b>공유 버튼</b>(네모에 위쪽 화살표)을 누르고 <b>'홈 화면에 추가'</b>를 누르세요";$('instBtn').hidden=true;$('inst').hidden=false}
+$('instBtn').addEventListener('click',async()=>{if(!deferred)return;deferred.prompt();const r=await deferred.userChoice;deferred=null;$('inst').hidden=true;if(r&&r.outcome==='accepted')toast('홈 화면에 라디오 서천 앱이 생겼어요')});
+$('instX').addEventListener('click',()=>{$('inst').hidden=true;try{localStorage.setItem('sr_inst_x','1')}catch(e){}});
+window.addEventListener('appinstalled',()=>{$('inst').hidden=true});
 
 render();load();
 // 다른 사람이 올린 글도 30초마다 저절로 보이게
