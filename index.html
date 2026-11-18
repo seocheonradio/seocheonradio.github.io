@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>서천 라디오 신청곡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 따뜻하고 단순하게, 어르신이 한눈에 읽는 마을 방송국 게시판
+   IDEA: 마을회관 벽에 붙은 큰 글씨 신청곡 접수 장부
+   PICTURE: 게시판 목록 자체가 그림 — 큰 줄, 큰 버튼
+   COLOUR and TYPE: 흰 바탕, 짙은 먹색 글씨, 진분홍 한 가지 강조색 / Noto Sans KR
+   LAYOUT: 한 줄 기둥, 최대 1100px, 휴대폰에선 줄을 카드처럼 쌓음 */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#16171a);--ink:light-dark(#1b1b1f,#f2f2f4);--sub:light-dark(#555a63,#b7bbc3);--line:light-dark(#dcdfe4,#34363c);--soft:light-dark(#f6f6f8,#202227);--ac:light-dark(#d6336c,#ff6b9a);--acink:#fff}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:20px/1.6 "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;overflow-x:clip}
+.wrap{max-width:1100px;margin:0 auto;padding:clamp(20px,4vw,48px) max(4vw,14px) 60px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+h1{margin:0;font-size:clamp(32px,6vw,46px);line-height:1.1;font-weight:800;display:flex;align-items:center;gap:14px}
+h1 svg{flex:none}
+.tag{margin:6px 0 0;color:var(--sub);font-size:19px}
+button,.btn{font:inherit;font-size:22px;font-weight:700;min-height:60px;padding:0 26px;border-radius:12px;border:2px solid var(--ac);background:var(--ac);color:var(--acink);cursor:pointer}
+button.ghost{background:transparent;color:var(--ac)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:4px solid light-dark(#ffb3cb,#80304a);outline-offset:2px}
+table{width:100%;border-collapse:collapse;border-top:3px solid var(--ink)}
+th{font-weight:800;padding:18px 10px;border-bottom:1px solid var(--line);font-size:21px}
+td{padding:20px 10px;border-bottom:1px solid var(--line);text-align:center;color:var(--sub)}
+td.t{text-align:left;color:var(--ink);font-weight:600}
+tbody tr.row{cursor:pointer}
+tbody tr.row:hover{background:var(--soft)}
+tr.notice{background:var(--soft)}
+.badge{display:inline-block;border:2px solid var(--ac);color:var(--ac);padding:2px 12px;border-radius:6px;font-size:18px;font-weight:700}
+.vill{color:var(--ac);font-weight:700}
+.num{width:90px}.c-v{width:150px}.c-n{width:140px}.c-d{width:130px;white-space:nowrap}
+.pager{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:30px 0}
+.pager button{min-width:56px;padding:0 12px;background:transparent;color:var(--ink);border-color:transparent}
+.pager button.on{border-color:var(--ac);color:var(--ac)}
+.search{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+input,textarea{font:inherit;font-size:22px;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:14px 16px;width:100%}
+.search input{flex:1 1 260px;max-width:440px;min-height:60px}
+.empty{padding:50px 10px;text-align:center;color:var(--sub)}
+.form{max-width:760px;margin:0 auto;display:grid;gap:26px}
+label{display:block;font-weight:800;font-size:24px;margin-bottom:8px}
+.hint{display:block;font-weight:400;font-size:18px;color:var(--sub);margin-top:2px}
+textarea{min-height:300px;line-height:1.6;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.acts{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.acts button{flex:1 1 200px;max-width:320px}
+.err{color:var(--ac);font-weight:700;text-align:center;min-height:1.6em;margin:0}
+.read{max-width:820px;margin:0 auto}
+.read .meta{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:21px;color:var(--sub);padding:16px 0;border-top:3px solid var(--ink);border-bottom:1px solid var(--line)}
+.read .meta b{color:var(--ink)}
+.read .body{white-space:pre-wrap;font-size:26px;line-height:1.75;padding:30px 4px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.note{font-size:16px;color:var(--sub);text-align:center;margin-top:26px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:16px 26px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+@media(max-width:700px){
+ body{font-size:19px}
+ thead{display:none}
+ table,tbody{display:block}
+ tbody tr{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:16px 6px;border-bottom:1px solid var(--line)}
+ td{border:0;padding:0;text-align:left;width:auto!important}
+ td.num{display:none}
+ td.t{grid-column:1/-1;font-size:22px}
+ td.c-d{grid-column:1/-1;font-size:17px}
+ tr.notice td.num{display:block}
+ tr.notice td.t{grid-column:2}
+ .two{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <header>
+  <div>
+   <h1><svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true"><rect x="4" y="16" width="44" height="30" rx="7" fill="var(--ac)"/><line x1="14" y1="16" x2="38" y2="5" stroke="var(--ac)" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="31" r="8" fill="none" stroke="#fff" stroke-width="3"/><rect x="30" y="24" width="12" height="4" rx="2" fill="#fff"/><rect x="30" y="33" width="12" height="4" rx="2" fill="#fff"/></svg>서천 라디오 신청곡</h1>
+   <p class="tag">사연과 듣고 싶은 노래를 보내 주세요</p>
+  </div>
+  <button id="goWrite">✎ 글쓰기</button>
+ </header>
+
+ <section id="vList">
+  <table>
+   <thead><tr><th class="num">번호</th><th class="c-v">마을</th><th>사연 · 신청곡</th><th class="c-n">이름</th><th class="c-d">날짜</th></tr></thead>
+   <tbody id="rows"></tbody>
+  </table>
+  <div class="pager" id="pager"></div>
+  <form class="search" id="sForm">
+   <input id="sInput" type="search" placeholder="마을, 이름, 노래 찾기" aria-label="검색어">
+   <button type="submit">검색</button>
+  </form>
+ </section>
+
+ <section id="vWrite" hidden>
+  <form class="form" id="wForm" novalidate>
+   <div class="two">
+    <div><label for="fVill">마을 이름</label><input id="fVill" list="villList" maxlength="30" placeholder="예) 시초면 신곡리" autocomplete="off"></div>
+    <div><label for="fName">보내는 사람</label><input id="fName" maxlength="20" placeholder="예) 김순자"></div>
+   </div>
+   <datalist id="villList"><option>서천읍</option><option>장항읍</option><option>마서면</option><option>화양면</option><option>한산면</option><option>마산면</option><option>시초면</option><option>문산면</option><option>판교면</option><option>기산면</option><option>비인면</option><option>서면</option><option>종천면</option></datalist>
+   <div>
+    <label for="fBody">사연과 신청곡<span class="hint">하고 싶은 이야기와 듣고 싶은 노래를 함께 적어 주세요</span></label>
+    <textarea id="fBody" maxlength="3000" placeholder="예) 오늘 손주가 다녀갔어요. 너무 반가웠습니다.&#10;&#10;신청곡: 나훈아 - 고향역"></textarea>
+   </div>
+   <p class="err" id="wErr" role="alert"></p>
+   <div class="acts"><button type="button" class="ghost" id="wCancel">취소</button><button type="submit" id="wSubmit">올리기</button></div>
+  </form>
+ </section>
+
+ <section id="vRead" hidden>
+  <div class="read">
+   <div class="meta" id="rMeta"></div>
+   <div class="body" id="rBody"></div>
+   <div class="acts" style="margin-top:26px"><button class="ghost" id="rBack">목록으로</button></div>
+  </div>
+ </section>
+
+ <p class="note" id="status">게시판을 불러오는 중입니다…</p>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const PER=10;
+let posts=[],page=1,q='',busy=false;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=t=>{const d=new Date(t);return isNaN(d)?'':`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const title=b=>{const l=String(b||'').split('\n').map(x=>x.trim()).filter(Boolean);return l[0]||'(내용 없음)'};
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),2600)};
+// ▼▼▼ 구글 Apps Script 배포 주소(…/exec)를 따옴표 안에 붙여넣으세요 ▼▼▼
+const API_URL='https://script.google.com/macros/s/AKfycbysjD_Z4kzHvsJsiAqCBI2aA330Yk34ON9yschnQF77t6L_bqd6G2meBmhp3i66yKjViA/exec';
+// ▲▲▲
+async function server(fn,arg){
+ const r=fn==='listPosts'
+  ?await fetch(API_URL+'?action=list&t='+Date.now())
+  :await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(arg)});
+ if(!r.ok)throw new Error('network');
+ const j=await r.json();
+ if(!j.ok)throw new Error(j.error||'server');
+ return j.posts;
+}
+
+function show(v){for(const k of ['vList','vWrite','vRead'])$(k).hidden=k!==v;$('goWrite').hidden=v!=='vList';window.scrollTo(0,0)}
+function filtered(){if(!q)return posts;const w=q.toLowerCase();return posts.filter(p=>[p.village,p.name,p.body].join(' ').toLowerCase().includes(w))}
+
+function render(){
+ const list=filtered(),pages=Math.max(1,Math.ceil(list.length/PER));
+ if(page>pages)page=pages;
+ const start=(page-1)*PER,slice=list.slice(start,start+PER);
+ let h=`<tr class="notice"><td class="num"><span class="badge">안내</span></td><td class="t" colspan="4">글쓰기를 누르고 마을 · 이름 · 사연과 신청곡을 적어 주세요</td></tr>`;
+ if(!slice.length)h+=`<tr><td colspan="5" class="empty">${q?'찾는 글이 없습니다':'아직 올라온 신청곡이 없습니다. 첫 사연을 보내 주세요!'}</td></tr>`;
+ h+=slice.map((p,i)=>`<tr class="row" data-id="${esc(p.id)}" tabindex="0"><td class="num">${list.length-start-i}</td><td class="c-v vill">${esc(p.village)}</td><td class="t">${esc(title(p.body))}</td><td class="c-n">${esc(p.name)}</td><td class="c-d">${fmt(p.at)}</td></tr>`).join('');
+ $('rows').innerHTML=h;
+ let g='';
+ if(pages>1){for(let n=1;n<=pages;n++)g+=`<button class="${n===page?'on':''}" data-p="${n}" aria-label="${n}쪽">${n}</button>`}
+ $('pager').innerHTML=g;
+}
+
+function openPost(id){
+ const p=posts.find(x=>x.id===id);if(!p)return;
+ $('rMeta').innerHTML=`<span>마을 <b>${esc(p.village)}</b></span><span>보낸 분 <b>${esc(p.name)}</b></span><span>${fmt(p.at)}</span>`;
+ $('rBody').textContent=p.body;
+ show('vRead');
+}
+
+async function load(quiet){
+ if(busy)return;busy=true;
+ try{posts=await server('listPosts');render();$('status').textContent='PC와 휴대폰 어디서 올려도 이 게시판에 함께 모입니다.'}
+ catch(e){if(!quiet)$('status').textContent='게시판을 불러오지 못했습니다. 잠시 뒤 새로고침해 주세요.'}
+ finally{busy=false}
+}
+
+$('rows').addEventListener('click',e=>{const r=e.target.closest('tr.row');if(r)openPost(r.dataset.id)});
+$('rows').addEventListener('keydown',e=>{if(e.key==='Enter'){const r=e.target.closest('tr.row');if(r)openPost(r.dataset.id)}});
+$('pager').addEventListener('click',e=>{const b=e.target.closest('button');if(b){page=+b.dataset.p;render();window.scrollTo(0,0)}});
+$('sForm').addEventListener('submit',e=>{e.preventDefault();q=$('sInput').value.trim();page=1;render()});
+$('goWrite').addEventListener('click',()=>{$('wErr').textContent='';show('vWrite');$('fVill').focus()});
+$('wCancel').addEventListener('click',()=>show('vList'));
+$('rBack').addEventListener('click',()=>show('vList'));
+
+try{$('fVill').value=localStorage.getItem('sr_vill')||'';$('fName').value=localStorage.getItem('sr_name')||''}catch(e){}
+
+$('wForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const village=$('fVill').value.trim(),name=$('fName').value.trim(),body=$('fBody').value.trim();
+ if(!village){$('wErr').textContent='마을 이름을 적어 주세요';$('fVill').focus();return}
+ if(!name){$('wErr').textContent='보내는 분 이름을 적어 주세요';$('fName').focus();return}
+ if(!body){$('wErr').textContent='사연과 신청곡을 적어 주세요';$('fBody').focus();return}
+ const btn=$('wSubmit');btn.disabled=true;btn.textContent='올리는 중…';
+ try{
+  posts=await server('addPost',{village,name,body});
+  try{localStorage.setItem('sr_vill',village);localStorage.setItem('sr_name',name)}catch(e){}
+  $('fBody').value='';page=1;q='';$('sInput').value='';render();show('vList');toast('신청곡이 올라갔습니다. 감사합니다!');
+ }catch(err){$('wErr').textContent='올리지 못했습니다. 잠시 뒤 다시 눌러 주세요'}
+ finally{btn.disabled=false;btn.textContent='올리기'}
+});
+
+render();load();
+// 다른 사람이 올린 글도 30초마다 저절로 보이게
+setInterval(()=>{if(!document.hidden&&!$('vList').hidden)load(true)},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(true)});
+}
+</script>
+</body>
+</html>
